@@ -1,0 +1,13 @@
+services:
+  Dockmeister:
+    build: .
+    container_name: Dockmeister
+    stdin_open: true
+    tty: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./stacks:/app/stacks
+      - ./data:/app/data
+    environment:
+      - TERM=xterm-256color
+    restart: unless-stopped

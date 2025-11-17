@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dockmeister"
+version = "0.1.0"
+description = "Terminal UI for managing Docker Compose stacks"
+requires-python = ">=3.12"
+dependencies = [
+    "textual>=1.0.0",
+    "docker>=7.0.0",
+    "python-on-whales>=0.70.0",
+    "aiosqlite>=0.20.0",
+    "watchdog>=4.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+dockmeister = "dockmeister.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
