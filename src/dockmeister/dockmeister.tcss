@@ -1,4 +1,97 @@
 Screen {
-    background: #0a0a0a;
-    color: #33ff33;
+    background: $background;
+    color: $primary;
+}
+
+#header-bar {
+    dock: top;
+    height: 1;
+    background: $surface;
+    color: $primary;
+    text-style: bold;
+    padding: 0 1;
+    width: 100%;
+}
+
+#main-container {
+    height: 1fr;
+}
+
+StackListPanel {
+    width: 24;
+    border-right: solid $secondary;
+}
+
+#right-container {
+    width: 1fr;
+}
+
+DetailPanel {
+    height: 1fr;
+    border-bottom: solid $secondary;
+}
+
+LogViewer {
+    height: 12;
+}
+
+.panel-title {
+    text-style: bold;
+    height: 1;
+    background: $surface;
+    color: $primary;
+    width: 100%;
+}
+
+.panel-footer {
+    dock: bottom;
+    height: 1;
+    color: $secondary;
+    padding: 0 1;
+}
+
+Footer {
+    background: $surface;
+    color: $primary;
+}
+
+#stack-list {
+    background: $background;
+    height: 1fr;
+}
+
+ListItem {
+    padding: 0 1;
+    color: $primary;
+}
+
+ListView > ListItem.--highlight {
+    background: $panel;
+}
+
+#detail-content {
+    height: 100%;
+}
+
+#detail-containers {
+    height: 1fr;
+    padding: 0 1;
+    color: $primary;
+}
+
+#detail-info {
+    height: auto;
+    padding: 0 1;
+    color: $secondary;
+}
+
+#log-output {
+    height: 1fr;
+    background: $background;
+    color: $primary;
+    padding: 0 1;
+}
+
+*:focus {
+    border: solid $primary;
 }
