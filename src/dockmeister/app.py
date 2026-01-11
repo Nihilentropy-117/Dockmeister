@@ -7,6 +7,7 @@ from dockmeister.screens.main import MainScreen
 from dockmeister.services.compose_service import ComposeService
 from dockmeister.services.discovery_service import DiscoveryService
 from dockmeister.services.docker_service import DockerService
+from dockmeister.services.stats_service import StatsService
 from dockmeister.theme import THEME_P1, THEME_P3
 
 
@@ -20,6 +21,7 @@ class DockmeisterApp(App):
         self.db = Database(Path("data/Dockmeister.db"))
         self.docker_service = DockerService()
         self.compose_service = ComposeService(self.stacks_dir)
+        self.stats_service = StatsService(self.docker_service)
         self._discovery: DiscoveryService | None = None
         self._main_screen: MainScreen | None = None
 

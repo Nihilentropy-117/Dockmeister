@@ -48,6 +48,7 @@ class MainScreen(Screen):
         super().__init__()
         self._stacks: list[Stack] = []
         self._selected_stack: Stack | None = None
+        self._selected_container_idx: int = 0
         self._active_ops: set[str] = set()
 
     def compose(self) -> ComposeResult:
@@ -142,15 +143,6 @@ class MainScreen(Screen):
         header.update(
             f" Dockmeister v0.1              \u25b8 {total} stacks \u2502 {running} running"
         )
-
-    def on_stack_list_panel_stack_selected(
-        self, message: StackListPanel.StackSelected
-    ) -> None:
-        for s in self._stacks:
-            if s.name == message.stack_name:
-                self._selected_stack = s
-                self.query_one(DetailPanel).show_stack(s)
-                break
 
     def _get_selected_name(self) -> str | None:
         return self._selected_stack.name if self._selected_stack else None
@@ -348,6 +340,83 @@ class MainScreen(Screen):
     def action_search(self) -> None:
         self.query_one(StackListPanel).show_search()
 
+    # --- Stats polling ---
+
+    @work(thread=True, exclusive=True, group="stats")
+    def _poll_stats(self) -> None:
+        worker = get_current_worker()
+        while not worker.is_cancelled:
+            stack = self._selected_stack
+            if stack and stack.containers:
+                running = [c for c in stack.containers if c.status == "running"]
+                if running:
+                    container_ids = [c.id for c in running]
+                    stats = self.app.stats_service.get_stats(container_ids)
+                    if not worker.is_cancelled:
+                        self.app.call_from_thread(
+                            self.query_one(DetailPanel).update_stats, stats
+                        )
+            time.sleep(2)
+
+    # --- Log streaming ---
+
+    @work(thread=True, exclusive=True, group="log-stream")
+    def _stream_logs(self, container_id: str, container_name: str) -> None:
+        worker = get_current_worker()
+        log_viewer = self.query_one(LogViewer)
+        self.app.call_from_thread(log_viewer.clear_logs)
+        self.app.call_from_thread(log_viewer.set_header, container_name)
+        for chunk in self.app.docker_service.stream_logs(container_id, tail=100):
+            if worker.is_cancelled:
+                break
+            try:
+                line = chunk.decode("utf-8", errors="replace").strip()
+            except AttributeError:
+                line = str(chunk).strip()
+            if line:
+                self.app.call_from_thread(log_viewer.write_log, line)
+
+    def _start_log_stream(self) -> None:
+        if not self._selected_stack or not self._selected_stack.containers:
+            return
+        containers = self._selected_stack.containers
+        idx = min(self._selected_container_idx, len(containers) - 1)
+        c = containers[idx]
+        if c.status == "running":
+            self._stream_logs(c.id, c.name)
+
+    def _select_container(self, idx: int) -> None:
+        if not self._selected_stack:
+            return
+        containers = self._selected_stack.containers
+        if 0 <= idx < len(containers):
+            self._selected_container_idx = idx
+            self._start_log_stream()
+
+    def on_key(self, event) -> None:
+        if event.character and event.character.isdigit():
+            n = int(event.character)
+            if 1 <= n <= 9:
+                self._select_container(n - 1)
+
+    def on_stack_list_panel_stack_selected(
+        self, message: StackListPanel.StackSelected
+    ) -> None:
+        for s in self._stacks:
+            if s.name == message.stack_name:
+                self._selected_stack = s
+                self._selected_container_idx = 0
+                self.query_one(DetailPanel).show_stack(s)
+                self._poll_stats()
+                self._start_log_stream()
+                break
+
+    # --- Logs toggle ---
+
+    def action_toggle_logs(self) -> None:
+        log_viewer = self.query_one(LogViewer)
+        log_viewer.focus()
+
     # --- Stubs for later phases ---
 
     def action_edit_compose(self) -> None:
@@ -355,9 +424,6 @@ class MainScreen(Screen):
 
     def action_edit_env(self) -> None:
         self.notify("Env editor: not implemented yet")
-
-    def action_toggle_logs(self) -> None:
-        self.notify("Logs: not implemented yet")
 
     def action_shell(self) -> None:
         self.notify("Shell: not implemented yet")
