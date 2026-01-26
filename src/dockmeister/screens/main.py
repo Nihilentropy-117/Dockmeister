@@ -417,13 +417,47 @@ class MainScreen(Screen):
         log_viewer = self.query_one(LogViewer)
         log_viewer.focus()
 
-    # --- Stubs for later phases ---
+    # --- Editor ---
 
     def action_edit_compose(self) -> None:
-        self.notify("Editor: not implemented yet")
+        stack = self._selected_stack
+        if not stack:
+            return
+        from dockmeister.widgets.editor import EditorPanel
+
+        def on_result(result: str | None) -> None:
+            if result == "recreate" and stack:
+                self.notify(f"Recreating {stack.name}...")
+                self._run_recreate(stack.name)
+            elif result == "saved":
+                self._load_stacks()
+
+        self.app.push_screen(
+            EditorPanel(stack.compose_file, stack.name),
+            on_result,
+        )
 
     def action_edit_env(self) -> None:
-        self.notify("Env editor: not implemented yet")
+        stack = self._selected_stack
+        if not stack:
+            return
+        from dockmeister.widgets.editor import EditorPanel
+
+        env_path = stack.env_file
+        if not env_path.exists():
+            env_path.touch()
+
+        def on_result(result: str | None) -> None:
+            if result == "recreate" and stack:
+                self.notify(f"Recreating {stack.name}...")
+                self._run_recreate(stack.name)
+
+        self.app.push_screen(
+            EditorPanel(env_path, stack.name, language=None),
+            on_result,
+        )
+
+    # --- Stubs for later phases ---
 
     def action_shell(self) -> None:
         self.notify("Shell: not implemented yet")
