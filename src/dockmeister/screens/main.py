@@ -457,13 +457,16 @@ class MainScreen(Screen):
             on_result,
         )
 
+    # --- Help ---
+
+    def action_help(self) -> None:
+        from dockmeister.screens.help import HelpOverlay
+        self.app.push_screen(HelpOverlay())
+
     # --- Stubs for later phases ---
 
     def action_shell(self) -> None:
         self.notify("Shell: not implemented yet")
-
-    def action_help(self) -> None:
-        self.notify("Help: not implemented yet")
 
     def action_history(self) -> None:
         self.notify("History: not implemented yet")
