@@ -42,6 +42,7 @@ class MainScreen(Screen):
         Binding("slash", "search", "Search", key_display="/"),
         Binding("question_mark", "help", "Help", key_display="?"),
         Binding("h", "history", "History"),
+        Binding("ctrl+p", "prune", "Prune", key_display="C-p"),
     ]
 
     def __init__(self) -> None:
@@ -66,6 +67,7 @@ class MainScreen(Screen):
     def on_mount(self) -> None:
         self.app.start_discovery(on_change=self._on_fs_change)
         self._load_stacks()
+        self._check_updates()
 
     def _on_fs_change(self) -> None:
         self.app.call_from_thread(self._load_stacks)
@@ -463,10 +465,66 @@ class MainScreen(Screen):
         from dockmeister.screens.help import HelpOverlay
         self.app.push_screen(HelpOverlay())
 
-    # --- Stubs for later phases ---
+    # --- Shell ---
 
     def action_shell(self) -> None:
-        self.notify("Shell: not implemented yet")
+        if not self._selected_stack or not self._selected_stack.containers:
+            self.notify("No container selected")
+            return
+        containers = self._selected_stack.containers
+        idx = min(self._selected_container_idx, len(containers) - 1)
+        c = containers[idx]
+        if c.status != "running":
+            self.notify(f"{c.name} is not running", severity="warning")
+            return
+        from dockmeister.widgets.shell import shell_into_container
+        with self.app.suspend():
+            shell_into_container(c.id)
+
+    # --- History ---
 
     def action_history(self) -> None:
-        self.notify("History: not implemented yet")
+        from dockmeister.screens.history import HistoryScreen
+        self.app.push_screen(HistoryScreen())
+
+    # --- Prune ---
+
+    def action_prune(self) -> None:
+        from dockmeister.widgets.prune import PrunePanel
+        self.app.push_screen(PrunePanel())
+
+    # --- Update checker background ---
+
+    @work(thread=True, exclusive=True, group="update-check")
+    def _check_updates(self) -> None:
+        worker = get_current_worker()
+        while not worker.is_cancelled:
+            for stack in self._stacks:
+                if worker.is_cancelled:
+                    return
+                images = list({c.image for c in stack.containers if c.image})
+                if not images:
+                    continue
+                # Run async check from thread
+                self.app.call_from_thread(
+                    self._run_update_check, stack.name, images
+                )
+            # Wait 30 minutes before next check
+            for _ in range(1800):
+                if worker.is_cancelled:
+                    return
+                time.sleep(1)
+
+    def _run_update_check(self, stack_name: str, images: list[str]) -> None:
+        self.run_worker(self._async_update_check(stack_name, images))
+
+    async def _async_update_check(self, stack_name: str, images: list[str]) -> None:
+        from dockmeister.services.update_checker import UpdateChecker
+        checker = UpdateChecker(self.app.docker_service, self.app.db)
+        results = await checker.check_stack_images(images)
+        has_update = any(results.values())
+        for s in self._stacks:
+            if s.name == stack_name:
+                s.has_update = has_update
+                break
+        self.query_one(StackListPanel).refresh_stacks(self._stacks)
