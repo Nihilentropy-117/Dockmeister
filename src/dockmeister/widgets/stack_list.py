@@ -112,3 +112,11 @@ class StackListPanel(Widget):
     def on_input_submitted(self, event: Input.Submitted) -> None:
         self.hide_search()
         self.query_one("#stack-list", ListView).focus()
+
+    def on_key(self, event) -> None:
+        if event.key == "escape" and self._search_active:
+            self.hide_search()
+            self.refresh_stacks(self._all_stacks)
+            self.query_one("#stack-list", ListView).focus()
+            event.prevent_default()
+            event.stop()

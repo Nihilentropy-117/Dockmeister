@@ -65,6 +65,12 @@ class MainScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
+        if not self.app._docker_available:
+            self.notify(
+                "Docker not available. Check that the Docker socket is mounted.",
+                severity="error",
+                timeout=10,
+            )
         self.app.start_discovery(on_change=self._on_fs_change)
         self._load_stacks()
         self._check_updates()

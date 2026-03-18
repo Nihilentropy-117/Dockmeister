@@ -3,6 +3,8 @@ Screen {
     color: $primary;
 }
 
+/* --- Header --- */
+
 #header-bar {
     dock: top;
     height: 1;
@@ -13,6 +15,8 @@ Screen {
     width: 100%;
 }
 
+/* --- Main layout --- */
+
 #main-container {
     height: 1fr;
 }
@@ -20,6 +24,10 @@ Screen {
 StackListPanel {
     width: 24;
     border-right: solid $secondary;
+}
+
+StackListPanel:focus-within {
+    border-right: solid $primary;
 }
 
 #right-container {
@@ -31,9 +39,15 @@ DetailPanel {
     border-bottom: solid $secondary;
 }
 
+DetailPanel:focus-within {
+    border-bottom: solid $primary;
+}
+
 LogViewer {
     height: 12;
 }
+
+/* --- Panel titles --- */
 
 .panel-title {
     text-style: bold;
@@ -50,10 +64,14 @@ LogViewer {
     padding: 0 1;
 }
 
+/* --- Footer --- */
+
 Footer {
     background: $surface;
     color: $primary;
 }
+
+/* --- Stack list --- */
 
 #stack-list {
     background: $background;
@@ -68,6 +86,18 @@ ListItem {
 ListView > ListItem.--highlight {
     background: $panel;
 }
+
+/* --- Search input --- */
+
+#search-input, #log-search {
+    height: 1;
+    border: none;
+    background: $surface;
+    color: $primary;
+    padding: 0 1;
+}
+
+/* --- Detail panel --- */
 
 #detail-content {
     height: 100%;
@@ -85,6 +115,8 @@ ListView > ListItem.--highlight {
     color: $secondary;
 }
 
+/* --- Log viewer --- */
+
 #log-output {
     height: 1fr;
     background: $background;
@@ -92,6 +124,31 @@ ListView > ListItem.--highlight {
     padding: 0 1;
 }
 
+/* --- Scrollbars --- */
+
+Scrollbar {
+    background: $background;
+    color: $secondary;
+}
+
+ScrollbarCorner {
+    background: $background;
+}
+
+/* --- Focus --- */
+
 *:focus {
     border: solid $primary;
+}
+
+ListView:focus {
+    border: none;
+}
+
+/* --- Toast / Notification --- */
+
+Toast {
+    background: $surface;
+    color: $primary;
+    border: solid $secondary;
 }
