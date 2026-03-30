@@ -1,7 +1,7 @@
 services:
-  Dockmeister:
+  dockmeister:
     build: .
-    container_name: Dockmeister
+    container_name: dockmeister
     stdin_open: true
     tty: true
     volumes:
