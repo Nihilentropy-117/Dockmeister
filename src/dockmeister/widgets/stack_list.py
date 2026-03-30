@@ -72,7 +72,7 @@ class StackListPanel(Widget):
 
     def on_list_view_highlighted(self, event: ListView.Highlighted) -> None:
         if event.item and isinstance(event.item, StackListItem):
-            self.post_message(self.StackSelected(event.item.stack_name))
+            self.post_message(self.StackSelected(event.item.stack.name))
 
     def get_selected_stack_name(self) -> str | None:
         list_view = self.query_one("#stack-list", ListView)
