@@ -7,9 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY pyproject.toml .
-COPY src/ src/
-
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir $(python -c "import tomllib; d=tomllib.load(open('pyproject.toml','rb')); print(' '.join(d['project']['dependencies']))")
 
 ENV TERM=xterm-256color
 
